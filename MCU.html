@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canvas Responsivo com Vetores e Controles</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        canvas {
+            border: 1px solid black;
+            width: 80%;
+            height: 80%;
+            max-width: 600px;
+            max-height: 600px;
+        }
+        #controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 10px;
+        }
+        label, button {
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<canvas id="myCanvas"></canvas>
+
+<div id="controls">
+    <label for="radiusSlider">Raio do círculo:</label>
+    <input type="range" id="radiusSlider" min="10" max="200" value="100">
+    
+    <label for="omegaSlider">&Omega; (ω):</label>
+    <input type="range" id="omegaSlider" min="0" max="10" value="1" step="0.1">
+
+    <button id="pauseButton">Pausar</button>
+
+    <label for="showAxesCheckbox">Mostrar eixo cartesiano e projeções</label>
+    <input type="checkbox" id="showAxesCheckbox" checked>
+
+    <label for="showVectorCheckbox">Mostrar vetor posição e ângulo</label>
+    <input type="checkbox" id="showVectorCheckbox" checked>
+
+    <label for="directionCheckbox">Girar no sentido anti-horário</label>
+    <input type="checkbox" id="directionCheckbox">
+</div>
+
+<script>
+    const canvas = document.getElementById('myCanvas');
+    const ctx = canvas.getContext('2d');
+    let radius = 100;
+    let omega = 1;
+    let angle = 0;
+    let isPaused = false;
+    let showAxes = true;
+    let showVector = true;
+    let counterClockwise = false;
+
+    function resizeCanvas() {
+        canvas.width = canvas.clientWidth;
+        canvas.height = canvas.clientHeight;
+        draw();
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+
+        if (showAxes) {
+            // Desenha os eixos cartesianos tracejados
+            ctx.beginPath();
+            ctx.setLineDash([5, 5]);
+            ctx.strokeStyle = `rgba(0, 0, 0, 0.2)`;
+
+            // Eixo X
+            ctx.moveTo(0, centerY);
+            ctx.lineTo(canvas.width, centerY);
+
+            // Eixo Y
+            ctx.moveTo(centerX, 0);
+            ctx.lineTo(centerX, canvas.height);
+
+            ctx.stroke();
+
+            // Desenha o círculo tracejado
+            ctx.beginPath();
+            ctx.setLineDash([5, 5]);
+            ctx.strokeStyle = `rgba(0, 0, 0, 0.5)`;
+            ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+
+        // Calcula a posição do ponto azul
+        const x = centerX + radius * Math.cos(angle);
+        const y = centerY + radius * Math.sin(angle);
+
+        if (showVector) {
+            // Desenha o vetor posição
+            ctx.strokeStyle = 'green';
+            ctx.setLineDash([]);
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(x, y);
+            ctx.stroke();
+
+            // Desenha o ângulo entre o vetor e o eixo X
+            ctx.beginPath();
+            ctx.setLineDash([2, 2]);
+            ctx.arc(centerX, centerY, radius / 3, 0, angle, counterClockwise);
+            ctx.stroke();
+        }
+
+        // Desenha o ponto azul
+        ctx.beginPath();
+        ctx.setLineDash([]);
+        ctx.fillStyle = 'blue';
+        ctx.arc(x, y, 5, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (showAxes) {
+            // Desenha as projeções do ponto azul nos eixos X e Y
+            ctx.strokeStyle = 'gray';
+            ctx.setLineDash([2, 2]);
+
+            // Projeção no eixo X
+            ctx.beginPath();
+            ctx.moveTo(x, centerY);
+            ctx.lineTo(x, y);
+            ctx.stroke();
+
+            // Projeção no eixo Y
+            ctx.beginPath();
+            ctx.moveTo(centerX, y);
+            ctx.lineTo(x, y);
+            ctx.stroke();
+
+            // Desenha os pontos das projeções
+            ctx.fillStyle = 'red';
+
+            // Ponto da projeção em X
+            ctx.beginPath();
+            ctx.arc(x, centerY, 5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Ponto da projeção em Y
+            ctx.beginPath();
+            ctx.arc(centerX, y, 5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        if (!isPaused) {
+            // Atualiza o ângulo para a próxima animação
+            angle += omega * 0.05 * (counterClockwise ? -1 : 1);
+        }
+
+        requestAnimationFrame(draw);
+    }
+
+    document.getElementById('radiusSlider').addEventListener('input', function(event) {
+        radius = event.target.value;
+    });
+
+    document.getElementById('omegaSlider').addEventListener('input', function(event) {
+        omega = event.target.value;
+    });
+
+    document.getElementById('pauseButton').addEventListener('click', function() {
+        isPaused = !isPaused;
+        this.textContent = isPaused ? 'Continuar' : 'Pausar';
+    });
+
+    document.getElementById('showAxesCheckbox').addEventListener('change', function(event) {
+        showAxes = event.target.checked;
+    });
+
+    document.getElementById('showVectorCheckbox').addEventListener('change', function(event) {
+        showVector = event.target.checked;
+    });
+
+    document.getElementById('directionCheckbox').addEventListener('change', function(event) {
+        counterClockwise = event.target.checked;
+    });
+
+    window.addEventListener('resize', resizeCanvas);
+
+    resizeCanvas();
+    draw();
+</script>
+
+</body>
+</html>

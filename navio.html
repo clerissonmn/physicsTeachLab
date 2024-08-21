@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulação Física do Navio</title>
+    <style>
+        /* Estilos para o layout e responsividade */
+        body { margin: 0; display: flex; flex-direction: column; align-items: center; font-family: Arial, sans-serif; }
+        #canvas-container { width: 100%; max-width: 800px; }
+        canvas { width: 100%; height: auto; }
+        #controls { margin: 20px 0; }
+    </style>
+</head>
+<body>
+
+<div id="canvas-container">
+    <canvas id="shipCanvas"></canvas>
+    <canvas id="graphCanvas"></canvas>
+</div>
+
+<div id="controls">
+    <label for="b">Coeficiente de Viscosidade (b): </label>
+    <input type="range" id="b" min="0.1" max="5" step="0.1" value="1">
+    <span id="bValue">1</span>
+    
+    <label for="m">Massa do Navio (m): </label>
+    <input type="range" id="m" min="10000" max="100000" step="10000" value="50000">
+    <span id="mValue">50000</span>
+
+    <label for="v0">Velocidade Inicial (v0): </label>
+    <input type="range" id="v0" min="0" max="20" step="1" value="10">
+    <span id="v0Value">10</span>
+
+    <label for="x0">Posição Inicial (x0): </label>
+    <input type="range" id="x0" min="0" max="100" step="1" value="0">
+    <span id="x0Value">0</span>
+    
+    <br>
+    
+    <input type="checkbox" id="showVelocity" checked> Velocidade
+    <input type="checkbox" id="showPosition" checked> Posição
+</div>
+
+<script>
+// Configuração dos gráficos e simulação
+const shipCanvas = document.getElementById('shipCanvas');
+const graphCanvas = document.getElementById('graphCanvas');
+const ctxShip = shipCanvas.getContext('2d');
+const ctxGraph = graphCanvas.getContext('2d');
+
+shipCanvas.height = 200;
+graphCanvas.height = 300;
+
+let b = parseFloat(document.getElementById('b').value);
+let m = parseFloat(document.getElementById('m').value);
+let v0 = parseFloat(document.getElementById('v0').value);
+let x0 = parseFloat(document.getElementById('x0').value);
+
+document.getElementById('b').addEventListener('input', updateValues);
+document.getElementById('m').addEventListener('input', updateValues);
+document.getElementById('v0').addEventListener('input', updateValues);
+document.getElementById('x0').addEventListener('input', updateValues);
+document.getElementById('showVelocity').addEventListener('change', toggleVisibility);
+document.getElementById('showPosition').addEventListener('change', toggleVisibility);
+
+function updateValues() {
+    b = parseFloat(document.getElementById('b').value);
+    m = parseFloat(document.getElementById('m').value);
+    v0 = parseFloat(document.getElementById('v0').value);
+    x0 = parseFloat(document.getElementById('x0').value);
+
+    document.getElementById('bValue').textContent = b;
+    document.getElementById('mValue').textContent = m;
+    document.getElementById('v0Value').textContent = v0;
+    document.getElementById('x0Value').textContent = x0;
+
+    updateGraph();
+    drawShip();
+}
+
+function drawShip() {
+    ctxShip.clearRect(0, 0, shipCanvas.width, shipCanvas.height);
+    const x = (x0 + v0 * Math.exp(-b/m)) % shipCanvas.width;
+    ctxShip.fillStyle = 'blue';
+    ctxShip.fillRect(x, shipCanvas.height/2 - 10, 50, 20);
+}
+
+let velocityData = [];
+let positionData = [];
+let timeData = [];
+const simulationDuration = 60; // Segundos
+
+function calculateData() {
+    velocityData = [];
+    positionData = [];
+    timeData = [];
+
+    for (let t = 0; t <= simulationDuration; t++) {
+        let v = v0 * Math.exp(-b/m * t);
+        let x = x0 + (m/b) * v0 * (1 - Math.exp(-b/m * t));
+        velocityData.push(v);
+        positionData.push(x);
+        timeData.push(t);
+    }
+}
+
+const graphConfig = {
+    type: 'line',
+    data: {
+        labels: timeData,
+        datasets: [
+            {
+                label: 'Velocidade',
+                data: velocityData,
+                borderColor: 'red',
+                yAxisID: 'y'
+            },
+            {
+                label: 'Posição',
+                data: positionData,
+                borderColor: 'green',
+                yAxisID: 'y1'
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: { type: 'linear', position: 'left', title: { display: true, text: 'Velocidade (m/s)' } },
+            y1: { type: 'linear', position: 'right', title: { display: true, text: 'Posição (m)' }, grid: { drawOnChartArea: false } }
+        }
+    }
+};
+
+const graphChart = new Chart(ctxGraph, graphConfig);
+
+function updateGraph() {
+    calculateData();
+    graphChart.data.labels = timeData;
+    graphChart.data.datasets[0].data = velocityData;
+    graphChart.data.datasets[1].data = positionData;
+    graphChart.update();
+}
+
+function toggleVisibility() {
+    graphChart.getDatasetMeta(0).hidden = !document.getElementById('showVelocity').checked;
+    graphChart.getDatasetMeta(1).hidden = !document.getElementById('showPosition').checked;
+    graphChart.update();
+}
+
+updateValues();
+
+// Inserindo Chart.js inline para rodar offline
+(function() {
+    var script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+    document.head.appendChild(script);
+})();
+</script>
+</body>
+</html>

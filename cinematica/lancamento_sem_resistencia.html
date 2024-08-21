@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canvas Simulation</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        canvas {
+            border: 1px solid black;
+            width: 80%;
+            height: 60%;
+        }
+        .controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 80%;
+        }
+        .slider {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin: 5px 0;
+        }
+        .slider label {
+            flex: 1;
+        }
+        .slider input {
+            flex: 2;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="myCanvas"></canvas>
+    <div class="controls">
+        <div class="slider">
+            <label for="x0">x0:</label>
+            <input type="range" id="x0" name="x0" min="0" max="100" value="10">
+        </div>
+        <div class="slider">
+            <label for="y0">y0:</label>
+            <input type="range" id="y0" name="y0" min="0" max="100" value="10">
+        </div>
+        <div class="slider">
+            <label for="theta">theta:</label>
+            <input type="range" id="theta" name="theta" min="0" max="90" value="45">
+        </div>
+        <div class="slider">
+            <label for="v0">v0:</label>
+            <input type="range" id="v0" name="v0" min="0" max="50" value="30">
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('myCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const sliders = {
+            x0: document.getElementById('x0'),
+            y0: document.getElementById('y0'),
+            theta: document.getElementById('theta'),
+            v0: document.getElementById('v0')
+        };
+
+        const g = 9.8;  // gravitational acceleration
+
+        function resizeCanvas() {
+            canvas.width = canvas.clientWidth;
+            canvas.height = canvas.clientHeight;
+            setMaxSliderValues();
+            draw();
+        }
+
+        function setMaxSliderValues() {
+            sliders.x0.max = canvas.width;
+            sliders.y0.max = canvas.height;
+            sliders.v0.max = Math.min(canvas.width, canvas.height) / 4;
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawAxes();
+            drawTrajectory();
+        }
+
+        function drawAxes() {
+            const width = canvas.width;
+            const height = canvas.height;
+            const tickLength = 10;
+            const subTickLength = 5;
+            const numTicks = 10;
+
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 1;
+
+            // Draw X and Y axes
+            ctx.beginPath();
+            ctx.moveTo(0, height);
+            ctx.lineTo(width, height);
+            ctx.moveTo(0, 0);
+            ctx.lineTo(0, height);
+            ctx.stroke();
+
+            // Draw tick marks and sub tick marks for X axis
+            for (let i = 0; i <= numTicks; i++) {
+                const x = (i / numTicks) * width;
+                ctx.beginPath();
+                ctx.moveTo(x, height);
+                ctx.lineTo(x, height - tickLength);
+                ctx.stroke();
+                
+                for (let j = 1; j < 5; j++) {
+                    const subX = x + (j / 5) * (width / numTicks);
+                    ctx.beginPath();
+                    ctx.moveTo(subX, height);
+                    ctx.lineTo(subX, height - subTickLength);
+                    ctx.stroke();
+                }
+            }
+
+            // Draw tick marks and sub tick marks for Y axis
+            for (let i = 0; i <= numTicks; i++) {
+                const y = height - (i / numTicks) * height;
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(tickLength, y);
+                ctx.stroke();
+                
+                for (let j = 1; j < 5; j++) {
+                    const subY = y - (j / 5) * (height / numTicks);
+                    ctx.beginPath();
+                    ctx.moveTo(0, subY);
+                    ctx.lineTo(subTickLength, subY);
+                    ctx.stroke();
+                }
+            }
+        }
+
+        function drawTrajectory() {
+            const x0 = parseInt(sliders.x0.value);
+            const y0 = parseInt(sliders.y0.value);
+            const theta = parseInt(sliders.theta.value);
+            const v0 = parseInt(sliders.v0.value);
+
+            const rad = theta * Math.PI / 180;
+            const vx = v0 * Math.cos(rad);
+            const vy = v0 * Math.sin(rad);
+
+            ctx.strokeStyle = 'blue';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(x0, canvas.height - y0);
+
+            let t = 0;
+            while (true) {
+                const x = x0 + vx * t;
+                const y = y0 + vy * t - 0.5 * g * t * t;
+
+                if (y <= 0 || x >= canvas.width || y0 + vy * t - 0.5 * g * t * t < 0) break;
+
+                ctx.lineTo(x, canvas.height - y);
+                t += 0.1;
+            }
+
+            ctx.stroke();
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        Object.values(sliders).forEach(slider => {
+            slider.addEventListener('input', draw);
+        });
+
+        resizeCanvas();
+    </script>
+</body>
+</html>

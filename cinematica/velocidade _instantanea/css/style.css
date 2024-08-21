@@ -1,0 +1,25 @@
+body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin: 0;
+    transition: background-color 0.5s, color 0.5s;
+}
+
+canvas {
+    border: 1px solid #000;
+    max-width: 100%;
+    height: auto;
+}
+
+body.light {
+    background-color: #ffffff;
+    color: #000000;
+}
+
+body.dark {
+    background-color: #000000;
+    color: #ffffff;
+}
