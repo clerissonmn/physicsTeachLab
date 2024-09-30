@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Car Simulation</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #333;
+        }
+
+        #simulation {
+            perspective: 1000px;
+            width: 300px;
+            height: 300px;
+            position: relative;
+            transform-style: preserve-3d;
+        }
+
+        .track {
+            width: 200px;
+            height: 200px;
+            border: 10px solid #555;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            transform-style: preserve-3d;
+        }
+
+        .car {
+            width: 40px;
+            height: 20px;
+            background-color: red;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform-origin: -80px center; /* Ponto ao redor do qual o carro gira */
+            transform: rotateZ(0deg) translateX(100px);
+        }
+
+        #ui {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 100;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div id="ui">
+        <button onclick="changeView('top')">Top View</button>
+        <button onclick="changeView('front')">Front View</button>
+        <button onclick="changeView('perspective')">Perspective View</button>
+        <br><br>
+        <label for="angle">Angle of Attack:</label>
+        <input type="range" id="angle" name="angle" min="-30" max="30" step="1" value="0" oninput="changeAngle(this.value)">
+    </div>
+
+    <div id="simulation">
+        <div class="track">
+            <div class="car" id="car"></div>
+        </div>
+    </div>
+
+    <script>
+        const simulation = document.getElementById('simulation');
+        const track = document.querySelector('.track');
+        const car = document.getElementById('car');
+        let angle = 0;
+        let rotation = 0;
+
+        function animateCar() {
+            rotation += 1; // Incrementa o ângulo para fazer o carro girar na pista
+            car.style.transform = `rotateZ(${rotation}deg) translateX(100px)`; // Gira o carro ao redor da pista
+            requestAnimationFrame(animateCar); // Continua a animação
+        }
+
+        function changeView(view) {
+            if (view === 'top') {
+                simulation.style.transform = 'rotateX(90deg)';
+            } else if (view === 'front') {
+                simulation.style.transform = 'rotateX(0deg)';
+            } else if (view === 'perspective') {
+                simulation.style.transform = 'rotateX(30deg) rotateY(30deg)';
+            }
+        }
+
+        function changeAngle(newAngle) {
+            angle = newAngle;
+            track.style.transform = `translate(-50%, -50%) rotateX(${angle}deg)`; // Inclina a pista
+        }
+
+        // Inicializa a animação do carro
+        animateCar();
+
+        // Inicializa com a vista perspectiva
+        changeView('perspective');
+    </script>
+</body>
+</html>
